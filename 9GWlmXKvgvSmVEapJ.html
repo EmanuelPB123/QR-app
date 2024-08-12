@@ -1,0 +1,432 @@
+<html><head><base href="https://language-battleship.example.com/"><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Language Battleship</title><style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f8ff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+h1 {
+    color: #007bff;
+}
+
+#game-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 20px;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(10, 40px);
+    gap: 2px;
+    background-color: #007bff;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.cell {
+    width: 40px;
+    height: 40px;
+    background-color: #ffffff;
+    border: 1px solid #007bff;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.cell:hover {
+    background-color: #e6f2ff;
+}
+
+.hit {
+    background-color: #ff6b6b !important;
+}
+
+.miss {
+    background-color: #4dabf7 !important;
+}
+
+.ship {
+    background-color: #28a745;
+}
+
+#controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+select, button {
+    padding: 10px;
+    font-size: 16px;
+}
+
+#word-container {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin-top: 20px;
+    text-align: center;
+}
+
+#description {
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+#options-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.option-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.option-button:hover {
+    background-color: #0056b3;
+}
+
+#message {
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+#score {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+.board-label {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+</style></head><body>
+<h1>Language Battleship</h1>
+
+<div id="controls">
+    <select id="language-select">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+    </select>
+    <select id="difficulty-select">
+        <option value="easy">Elemental (20 palabras)</option>
+        <option value="medium">Intermedio (40 palabras)</option>
+        <option value="hard">Experto (80 palabras)</option>
+    </select>
+    <button id="start-game">Iniciar Juego</button>
+</div>
+
+<div id="game-container">
+    <div>
+        <div class="board-label">Tu tablero</div>
+        <div id="player-board" class="board"></div>
+    </div>
+    <div>
+        <div class="board-label">Tablero de la IA</div>
+        <div id="ai-board" class="board"></div>
+    </div>
+</div>
+
+<div id="word-container" style="display: none;">
+    <p id="description"></p>
+    <div id="options-container">
+        <button class="option-button" id="option1"></button>
+        <button class="option-button" id="option2"></button>
+    </div>
+</div>
+
+<div id="message"></div>
+<div id="score">Puntuación: 0</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+<script>
+const boardSize = 10;
+const shipSizes = [5, 4, 3, 3, 2];
+let playerBoard = [];
+let aiBoard = [];
+let playerShips = [];
+let aiShips = [];
+let score = 0;
+let currentWord = '';
+let isPlayerTurn = true;
+let gameStarted = false;
+
+const languageWords = {
+    en: {
+        easy: [
+            { word: 'cat', description: 'A small domesticated carnivorous mammal with soft fur', options: ['cat', 'dog'] },
+            { word: 'dog', description: 'A domesticated carnivorous mammal that typically has a long snout', options: ['cat', 'dog'] },
+            { word: 'house', description: 'A building for human habitation', options: ['house', 'car'] },
+            { word: 'tree', description: 'A woody perennial plant, typically having a single stem or trunk', options: ['tree', 'flower'] },
+            { word: 'book', description: 'A written or printed work consisting of pages glued or sewn together', options: ['book', 'magazine'] },
+            // Add 15 more word objects for a total of 20
+        ],
+        medium: [
+            { word: 'astronomy', description: 'The scientific study of celestial objects, space, and the physical universe as a whole', options: ['astronomy', 'astrology'] },
+            { word: 'democracy', description: 'A system of government by the whole population or all eligible members of a state', options: ['democracy', 'monarchy'] },
+            { word: 'photosynthesis', description: 'The process by which green plants use sunlight to synthesize foods from carbon dioxide and water', options: ['photosynthesis', 'respiration'] },
+            { word: 'ecosystem', description: 'A biological community of interacting organisms and their physical environment', options: ['ecosystem', 'habitat'] },
+            { word: 'philosophy', description: 'The study of the fundamental nature of knowledge, reality, and existence', options: ['philosophy', 'psychology'] },
+            // Add 35 more word objects for a total of 40
+        ],
+        hard: [
+            { word: 'ubiquitous', description: 'Present, appearing, or found everywhere', options: ['ubiquitous', 'rare'] },
+            { word: 'ephemeral', description: 'Lasting for a very short time', options: ['ephemeral', 'eternal'] },
+            { word: 'paradigm', description: 'A typical example or pattern of something; a model', options: ['paradigm', 'paradox'] },
+            { word: 'enigmatic', description: 'Difficult to interpret or understand; mysterious', options: ['enigmatic', 'obvious'] },
+            { word: 'serendipity', description: 'The occurrence and development of events by chance in a happy or beneficial way', options: ['serendipity', 'destiny'] },
+            // Add 75 more word objects for a total of 80
+        ]
+    },
+    es: {
+        easy: [
+            { word: 'gato', description: 'Un pequeño mamífero carnívoro domesticado con pelaje suave', options: ['gato', 'perro'] },
+            { word: 'perro', description: 'Un mamífero carnívoro domesticado que típicamente tiene un hocico largo', options: ['gato', 'perro'] },
+            { word: 'casa', description: 'Un edificio para la habitación humana', options: ['casa', 'coche'] },
+            { word: 'árbol', description: 'Una planta perenne leñosa, típicamente con un solo tallo o tronco', options: ['árbol', 'flor'] },
+            { word: 'libro', description: 'Una obra escrita o impresa que consiste en páginas pegadas o cosidas juntas', options: ['libro', 'revista'] },
+            // Add 15 more word objects for a total of 20
+        ],
+        medium: [
+            { word: 'astronomía', description: 'El estudio científico de los objetos celestes, el espacio y el universo físico en su conjunto', options: ['astronomía', 'astrología'] },
+            { word: 'democracia', description: 'Un sistema de gobierno por toda la población o todos los miembros elegibles de un estado', options: ['democracia', 'monarquía'] },
+            { word: 'fotosíntesis', description: 'El proceso por el cual las plantas verdes utilizan la luz solar para sintetizar alimentos a partir de dióxido de carbono y agua', options: ['fotosíntesis', 'respiración'] },
+            { word: 'ecosistema', description: 'Una comunidad biológica de organismos que interactúan y su entorno físico', options: ['ecosistema', 'hábitat'] },
+            { word: 'filosofía', description: 'El estudio de la naturaleza fundamental del conocimiento, la realidad y la existencia', options: ['filosofía', 'psicología'] },
+            // Add 35 more word objects for a total of 40
+        ],
+        hard: [
+            { word: 'ubícuo', description: 'Presente, que aparece o se encuentra en todas partes', options: ['ubícuo', 'raro'] },
+            { word: 'efímero', description: 'Que dura muy poco tiempo', options: ['efímero', 'eterno'] },
+            { word: 'paradigma', description: 'Un ejemplo típico o patrón de algo; un modelo', options: ['paradigma', 'paradoja'] },
+            { word: 'enigmático', description: 'Difícil de interpretar o entender; misterioso', options: ['enigmático', 'obvio'] },
+            { word: 'serendipia', description: 'La ocurrencia y desarrollo de eventos por casualidad de una manera feliz o beneficiosa', options: ['serendipia', 'destino'] },
+            // Add 75 more word objects for a total of 80
+        ]
+    },
+    fr: {
+        easy: [
+            { word: 'chat', description: 'Un petit mammifère carnivore domestiqué à fourrure douce', options: ['chat', 'chien'] },
+            { word: 'chien', description: 'Un mammifère carnivore domestiqué qui a typiquement un museau long', options: ['chat', 'chien'] },
+            { word: 'maison', description: 'Un bâtiment pour l\'habitation humaine', options: ['maison', 'voiture'] },
+            { word: 'arbre', description: 'Une plante ligneuse vivace, ayant typiquement une seule tige ou un tronc', options: ['arbre', 'fleur'] },
+            { word: 'livre', description: 'Un ouvrage écrit ou imprimé composé de pages collées ou cousues ensemble', options: ['livre', 'magazine'] },
+            // Add 15 more word objects for a total of 20
+        ],
+        medium: [
+            { word: 'astronomie', description: 'L\'étude scientifique des objets célestes, de l\'espace et de l\'univers physique dans son ensemble', options: ['astronomie', 'astrologie'] },
+            { word: 'démocratie', description: 'Un système de gouvernement par l\'ensemble de la population ou tous les membres éligibles d\'un État', options: ['démocratie', 'monarchie'] },
+            { word: 'photosynthèse', description: 'Le processus par lequel les plantes vertes utilisent la lumière du soleil pour synthétiser des aliments à partir du dioxyde de carbone et de l\'eau', options: ['photosynthèse', 'respiration'] },
+            { word: 'écosystème', description: 'Une communauté biologique d\'organismes en interaction et leur environnement physique', options: ['écosystème', 'habitat'] },
+            { word: 'philosophie', description: 'L\'étude de la nature fondamentale de la connaissance, de la réalité et de l\'existence', options: ['philosophie', 'psychologie'] },
+            // Add 35 more word objects for a total of 40
+        ],
+        hard: [
+            { word: 'ubiquitaire', description: 'Présent, apparaissant ou trouvé partout', options: ['ubiquitaire', 'rare'] },
+            { word: 'éphémère', description: 'Qui dure très peu de temps', options: ['éphémère', 'éternel'] },
+            { word: 'paradigme', description: 'Un exemple typique ou un modèle de quelque chose', options: ['paradigme', 'paradoxe'] },
+            { word: 'énigmatique', description: 'Difficile à interpréter ou à comprendre; mystérieux', options: ['énigmatique', 'évident'] },
+            { word: 'sérendipité', description: 'L\'occurrence et le développement d\'événements par hasard d\'une manière heureuse ou bénéfique', options: ['sérendipité', 'destin'] },
+            // Add 75 more word objects for a total of 80
+        ]
+    }
+};
+
+function createBoard(boardId) {
+    const boardElement = document.getElementById(boardId);
+    boardElement.innerHTML = '';
+    const board = Array(boardSize).fill().map(() => Array(boardSize).fill(0));
+    for (let i = 0; i < boardSize; i++) {
+        for (let j = 0; j < boardSize; j++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.dataset.row = i;
+            cell.dataset.col = j;
+            if (boardId === 'ai-board') {
+                cell.addEventListener('click', handlePlayerGuess);
+            }
+            boardElement.appendChild(cell);
+        }
+    }
+    return board;
+}
+
+function placeShips(board, ships) {
+    for (const size of shipSizes) {
+        let placed = false;
+        while (!placed) {
+            const horizontal = Math.random() < 0.5;
+            const row = Math.floor(Math.random() * boardSize);
+            const col = Math.floor(Math.random() * boardSize);
+            if (canPlaceShip(board, row, col, size, horizontal)) {
+                placeShip(board, row, col, size, horizontal);
+                ships.push({ size, hits: 0 });
+                placed = true;
+            }
+        }
+    }
+}
+
+function canPlaceShip(board, row, col, size, horizontal) {
+    if (horizontal) {
+        if (col + size > boardSize) return false;
+        for (let i = 0; i < size; i++) {
+            if (board[row][col + i] !== 0) return false;
+        }
+    } else {
+        if (row + size > boardSize) return false;
+        for (let i = 0; i < size; i++) {
+            if (board[row + i][col] !== 0) return false;
+        }
+    }
+    return true;
+}
+
+function placeShip(board, row, col, size, horizontal) {
+    if (horizontal) {
+        for (let i = 0; i < size; i++) {
+            board[row][col + i] = 1;
+        }
+    } else {
+        for (let i = 0; i < size; i++) {
+            board[row + i][col] = 1;
+        }
+    }
+}
+
+function handlePlayerGuess(event) {
+    if (!gameStarted || !isPlayerTurn) return;
+    const row = parseInt(event.target.dataset.row);
+    const col = parseInt(event.target.dataset.col);
+    if (aiBoard[row][col] === -1 || aiBoard[row][col] === -2) return;
+
+    if (aiBoard[row][col] === 1) {
+        event.target.classList.add('hit');
+        aiBoard[row][col] = -2;
+        score += 10;
+        updateScore();
+        showWordGuess();
+    } else {
+        event.target.classList.add('miss');
+        aiBoard[row][col] = -1;
+        endPlayerTurn();
+    }
+}
+
+function showWordGuess() {
+    const language = document.getElementById('language-select').value;
+    const difficulty = document.getElementById('difficulty-select').value;
+    const words = languageWords[language][difficulty];
+    const wordObj = words[Math.floor(Math.random() * words.length)];
+    currentWord = wordObj.word;
+    document.getElementById('description').textContent = wordObj.description;
+    
+    const option1 = document.getElementById('option1');
+    const option2 = document.getElementById('option2');
+    
+    if (Math.random() < 0.5) {
+        option1.textContent = wordObj.options[0];
+        option2.textContent = wordObj.options[1];
+    } else {
+        option1.textContent = wordObj.options[1];
+        option2.textContent = wordObj.options[0];
+    }
+    
+    option1.onclick = () => checkAnswer(option1.textContent);
+    option2.onclick = () => checkAnswer(option2.textContent);
+    
+    document.getElementById('word-container').style.display = 'block';
+    isPlayerTurn = false;
+}
+
+function checkAnswer(answer) {
+    if (answer.toLowerCase() === currentWord.toLowerCase()) {
+        score += 20;
+        updateScore();
+        showMessage('¡Correcto! +20 puntos');
+    } else {
+        showMessage(`Incorrecto. La palabra correcta era: ${currentWord}`);
+    }
+    document.getElementById('word-container').style.display = 'none';
+    endPlayerTurn();
+}
+
+function endPlayerTurn() {
+    isPlayerTurn = false;
+    setTimeout(aiTurn, 1000);
+}
+
+function aiTurn() {
+    let row, col;
+    do {
+        row = Math.floor(Math.random() * boardSize);
+        col = Math.floor(Math.random() * boardSize);
+    } while (playerBoard[row][col] === -1 || playerBoard[row][col] === -2);
+
+    const cell = document.querySelector(`#player-board [data-row="${row}"][data-col="${col}"]`);
+    if (playerBoard[row][col] === 1) {
+        cell.classList.add('hit');
+        playerBoard[row][col] = -2;
+        showMessage('¡La IA ha acertado!');
+        setTimeout(aiTurn, 1000);
+    } else {
+        cell.classList.add('miss');
+        playerBoard[row][col] = -1;
+        showMessage('La IA ha fallado');
+        isPlayerTurn = true;
+    }
+}
+
+function updateScore() {
+    document.getElementById('score').textContent = `Puntuación: ${score}`;
+}
+
+function showMessage(msg) {
+    document.getElementById('message').textContent = msg;
+}
+
+document.getElementById('start-game').addEventListener('click', () => {
+    gameStarted = true;
+    isPlayerTurn = true;
+    score = 0;
+    updateScore();
+    playerBoard = createBoard('player-board');
+    aiBoard = createBoard('ai-board');
+    playerShips = [];
+    aiShips = [];
+    placeShips(playerBoard, playerShips);
+    placeShips(aiBoard, aiShips);
+    showPlayerShips();
+    showMessage('¡El juego ha comenzado! Es tu turno.');
+});
+
+function showPlayerShips() {
+    for (let i = 0; i < boardSize; i++) {
+        for (let j = 0; j < boardSize; j++) {
+            if (playerBoard[i][j] === 1) {
+                const cell = document.querySelector(`#player-board [data-row="${i}"][data-col="${j}"]`);
+                cell.classList.add('ship');
+            }
+        }
+    }
+}
+
+playerBoard = createBoard('player-board');
+aiBoard = createBoard('ai-board');
+</script>
+</body></html>
