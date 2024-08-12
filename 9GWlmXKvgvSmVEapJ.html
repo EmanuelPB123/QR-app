@@ -1,432 +1,384 @@
-<html><head><base href="https://language-battleship.example.com/"><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Language Battleship</title><style>
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f8ff;
+<html><head><base href="https://inventory.manager.app/" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestor de Inventario Moderno</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+  :root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --background-color: #f4f4f4;
+    --text-color: #333;
+    --nav-width: 200px;
+  }
+  
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  nav {
+    width: 100%;
+    background-color: var(--primary-color);
+    padding: 10px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-around;
+  }
+  
+  nav li {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-align: center;
+  }
+  
+  nav li:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  nav li.active {
+    background-color: var(--secondary-color);
+  }
+  
+  main {
+    padding: 20px;
+    flex-grow: 1;
+  }
+  
+  .section {
+    display: none;
+    animation: fadeIn 0.5s;
+  }
+  
+  .section.active {
+    display: block;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  h1, h2 {
+    color: var(--primary-color);
+    text-align: center;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  th, td {
+    border: none;
+    padding: 12px;
+    text-align: left;
+  }
+  
+  th {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  
+  .input-group {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px;
-}
-
-h1 {
-    color: #007bff;
-}
-
-#game-container {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-top: 20px;
-}
-
-.board {
-    display: grid;
-    grid-template-columns: repeat(10, 40px);
-    gap: 2px;
-    background-color: #007bff;
-    padding: 10px;
-    border-radius: 5px;
-}
-
-.cell {
-    width: 40px;
-    height: 40px;
-    background-color: #ffffff;
-    border: 1px solid #007bff;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.cell:hover {
-    background-color: #e6f2ff;
-}
-
-.hit {
-    background-color: #ff6b6b !important;
-}
-
-.miss {
-    background-color: #4dabf7 !important;
-}
-
-.ship {
-    background-color: #28a745;
-}
-
-#controls {
-    display: flex;
-    gap: 10px;
     margin-bottom: 20px;
-}
-
-select, button {
+  }
+  
+  input, button {
+    margin: 10px 0;
     padding: 10px;
-    font-size: 16px;
-}
-
-#word-container {
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    margin-top: 20px;
-    text-align: center;
-}
-
-#description {
-    font-style: italic;
-    margin-bottom: 10px;
-}
-
-#options-container {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.option-button {
-    background-color: #007bff;
-    color: white;
     border: none;
-    padding: 10px 20px;
+    border-radius: 5px;
+    width: 100%;
+    max-width: 250px;
+  }
+  
+  input {
+    border: 1px solid #ddd;
+  }
+  
+  button {
+    background-color: var(--secondary-color);
+    color: white;
     cursor: pointer;
     transition: background-color 0.3s;
-}
-
-.option-button:hover {
-    background-color: #0056b3;
-}
-
-#message {
-    margin-top: 20px;
-    font-weight: bold;
-}
-
-#score {
-    font-size: 18px;
-    font-weight: bold;
-    margin-top: 20px;
-}
-
-.board-label {
-    text-align: center;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-</style></head><body>
-<h1>Language Battleship</h1>
-
-<div id="controls">
-    <select id="language-select">
-        <option value="en">English</option>
-        <option value="es">Español</option>
-        <option value="fr">Français</option>
-    </select>
-    <select id="difficulty-select">
-        <option value="easy">Elemental (20 palabras)</option>
-        <option value="medium">Intermedio (40 palabras)</option>
-        <option value="hard">Experto (80 palabras)</option>
-    </select>
-    <button id="start-game">Iniciar Juego</button>
-</div>
-
-<div id="game-container">
-    <div>
-        <div class="board-label">Tu tablero</div>
-        <div id="player-board" class="board"></div>
-    </div>
-    <div>
-        <div class="board-label">Tablero de la IA</div>
-        <div id="ai-board" class="board"></div>
-    </div>
-</div>
-
-<div id="word-container" style="display: none;">
-    <p id="description"></p>
-    <div id="options-container">
-        <button class="option-button" id="option1"></button>
-        <button class="option-button" id="option2"></button>
-    </div>
-</div>
-
-<div id="message"></div>
-<div id="score">Puntuación: 0</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
-<script>
-const boardSize = 10;
-const shipSizes = [5, 4, 3, 3, 2];
-let playerBoard = [];
-let aiBoard = [];
-let playerShips = [];
-let aiShips = [];
-let score = 0;
-let currentWord = '';
-let isPlayerTurn = true;
-let gameStarted = false;
-
-const languageWords = {
-    en: {
-        easy: [
-            { word: 'cat', description: 'A small domesticated carnivorous mammal with soft fur', options: ['cat', 'dog'] },
-            { word: 'dog', description: 'A domesticated carnivorous mammal that typically has a long snout', options: ['cat', 'dog'] },
-            { word: 'house', description: 'A building for human habitation', options: ['house', 'car'] },
-            { word: 'tree', description: 'A woody perennial plant, typically having a single stem or trunk', options: ['tree', 'flower'] },
-            { word: 'book', description: 'A written or printed work consisting of pages glued or sewn together', options: ['book', 'magazine'] },
-            // Add 15 more word objects for a total of 20
-        ],
-        medium: [
-            { word: 'astronomy', description: 'The scientific study of celestial objects, space, and the physical universe as a whole', options: ['astronomy', 'astrology'] },
-            { word: 'democracy', description: 'A system of government by the whole population or all eligible members of a state', options: ['democracy', 'monarchy'] },
-            { word: 'photosynthesis', description: 'The process by which green plants use sunlight to synthesize foods from carbon dioxide and water', options: ['photosynthesis', 'respiration'] },
-            { word: 'ecosystem', description: 'A biological community of interacting organisms and their physical environment', options: ['ecosystem', 'habitat'] },
-            { word: 'philosophy', description: 'The study of the fundamental nature of knowledge, reality, and existence', options: ['philosophy', 'psychology'] },
-            // Add 35 more word objects for a total of 40
-        ],
-        hard: [
-            { word: 'ubiquitous', description: 'Present, appearing, or found everywhere', options: ['ubiquitous', 'rare'] },
-            { word: 'ephemeral', description: 'Lasting for a very short time', options: ['ephemeral', 'eternal'] },
-            { word: 'paradigm', description: 'A typical example or pattern of something; a model', options: ['paradigm', 'paradox'] },
-            { word: 'enigmatic', description: 'Difficult to interpret or understand; mysterious', options: ['enigmatic', 'obvious'] },
-            { word: 'serendipity', description: 'The occurrence and development of events by chance in a happy or beneficial way', options: ['serendipity', 'destiny'] },
-            // Add 75 more word objects for a total of 80
-        ]
-    },
-    es: {
-        easy: [
-            { word: 'gato', description: 'Un pequeño mamífero carnívoro domesticado con pelaje suave', options: ['gato', 'perro'] },
-            { word: 'perro', description: 'Un mamífero carnívoro domesticado que típicamente tiene un hocico largo', options: ['gato', 'perro'] },
-            { word: 'casa', description: 'Un edificio para la habitación humana', options: ['casa', 'coche'] },
-            { word: 'árbol', description: 'Una planta perenne leñosa, típicamente con un solo tallo o tronco', options: ['árbol', 'flor'] },
-            { word: 'libro', description: 'Una obra escrita o impresa que consiste en páginas pegadas o cosidas juntas', options: ['libro', 'revista'] },
-            // Add 15 more word objects for a total of 20
-        ],
-        medium: [
-            { word: 'astronomía', description: 'El estudio científico de los objetos celestes, el espacio y el universo físico en su conjunto', options: ['astronomía', 'astrología'] },
-            { word: 'democracia', description: 'Un sistema de gobierno por toda la población o todos los miembros elegibles de un estado', options: ['democracia', 'monarquía'] },
-            { word: 'fotosíntesis', description: 'El proceso por el cual las plantas verdes utilizan la luz solar para sintetizar alimentos a partir de dióxido de carbono y agua', options: ['fotosíntesis', 'respiración'] },
-            { word: 'ecosistema', description: 'Una comunidad biológica de organismos que interactúan y su entorno físico', options: ['ecosistema', 'hábitat'] },
-            { word: 'filosofía', description: 'El estudio de la naturaleza fundamental del conocimiento, la realidad y la existencia', options: ['filosofía', 'psicología'] },
-            // Add 35 more word objects for a total of 40
-        ],
-        hard: [
-            { word: 'ubícuo', description: 'Presente, que aparece o se encuentra en todas partes', options: ['ubícuo', 'raro'] },
-            { word: 'efímero', description: 'Que dura muy poco tiempo', options: ['efímero', 'eterno'] },
-            { word: 'paradigma', description: 'Un ejemplo típico o patrón de algo; un modelo', options: ['paradigma', 'paradoja'] },
-            { word: 'enigmático', description: 'Difícil de interpretar o entender; misterioso', options: ['enigmático', 'obvio'] },
-            { word: 'serendipia', description: 'La ocurrencia y desarrollo de eventos por casualidad de una manera feliz o beneficiosa', options: ['serendipia', 'destino'] },
-            // Add 75 more word objects for a total of 80
-        ]
-    },
-    fr: {
-        easy: [
-            { word: 'chat', description: 'Un petit mammifère carnivore domestiqué à fourrure douce', options: ['chat', 'chien'] },
-            { word: 'chien', description: 'Un mammifère carnivore domestiqué qui a typiquement un museau long', options: ['chat', 'chien'] },
-            { word: 'maison', description: 'Un bâtiment pour l\'habitation humaine', options: ['maison', 'voiture'] },
-            { word: 'arbre', description: 'Une plante ligneuse vivace, ayant typiquement une seule tige ou un tronc', options: ['arbre', 'fleur'] },
-            { word: 'livre', description: 'Un ouvrage écrit ou imprimé composé de pages collées ou cousues ensemble', options: ['livre', 'magazine'] },
-            // Add 15 more word objects for a total of 20
-        ],
-        medium: [
-            { word: 'astronomie', description: 'L\'étude scientifique des objets célestes, de l\'espace et de l\'univers physique dans son ensemble', options: ['astronomie', 'astrologie'] },
-            { word: 'démocratie', description: 'Un système de gouvernement par l\'ensemble de la population ou tous les membres éligibles d\'un État', options: ['démocratie', 'monarchie'] },
-            { word: 'photosynthèse', description: 'Le processus par lequel les plantes vertes utilisent la lumière du soleil pour synthétiser des aliments à partir du dioxyde de carbone et de l\'eau', options: ['photosynthèse', 'respiration'] },
-            { word: 'écosystème', description: 'Une communauté biologique d\'organismes en interaction et leur environnement physique', options: ['écosystème', 'habitat'] },
-            { word: 'philosophie', description: 'L\'étude de la nature fondamentale de la connaissance, de la réalité et de l\'existence', options: ['philosophie', 'psychologie'] },
-            // Add 35 more word objects for a total of 40
-        ],
-        hard: [
-            { word: 'ubiquitaire', description: 'Présent, apparaissant ou trouvé partout', options: ['ubiquitaire', 'rare'] },
-            { word: 'éphémère', description: 'Qui dure très peu de temps', options: ['éphémère', 'éternel'] },
-            { word: 'paradigme', description: 'Un exemple typique ou un modèle de quelque chose', options: ['paradigme', 'paradoxe'] },
-            { word: 'énigmatique', description: 'Difficile à interpréter ou à comprendre; mystérieux', options: ['énigmatique', 'évident'] },
-            { word: 'sérendipité', description: 'L\'occurrence et le développement d\'événements par hasard d\'une manière heureuse ou bénéfique', options: ['sérendipité', 'destin'] },
-            // Add 75 more word objects for a total of 80
-        ]
+  }
+  
+  button:hover {
+    background-color: #27ae60;
+  }
+  
+  #qr-reader, #qr-reader-salida {
+    width: 100%;
+    max-width: 300px;
+    margin: 20px auto;
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  .qr-code {
+    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+  }
+  
+  @media print {
+    .no-print {
+      display: none;
     }
-};
-
-function createBoard(boardId) {
-    const boardElement = document.getElementById(boardId);
-    boardElement.innerHTML = '';
-    const board = Array(boardSize).fill().map(() => Array(boardSize).fill(0));
-    for (let i = 0; i < boardSize; i++) {
-        for (let j = 0; j < boardSize; j++) {
-            const cell = document.createElement('div');
-            cell.classList.add('cell');
-            cell.dataset.row = i;
-            cell.dataset.col = j;
-            if (boardId === 'ai-board') {
-                cell.addEventListener('click', handlePlayerGuess);
-            }
-            boardElement.appendChild(cell);
-        }
-    }
-    return board;
-}
-
-function placeShips(board, ships) {
-    for (const size of shipSizes) {
-        let placed = false;
-        while (!placed) {
-            const horizontal = Math.random() < 0.5;
-            const row = Math.floor(Math.random() * boardSize);
-            const col = Math.floor(Math.random() * boardSize);
-            if (canPlaceShip(board, row, col, size, horizontal)) {
-                placeShip(board, row, col, size, horizontal);
-                ships.push({ size, hits: 0 });
-                placed = true;
-            }
-        }
-    }
-}
-
-function canPlaceShip(board, row, col, size, horizontal) {
-    if (horizontal) {
-        if (col + size > boardSize) return false;
-        for (let i = 0; i < size; i++) {
-            if (board[row][col + i] !== 0) return false;
-        }
-    } else {
-        if (row + size > boardSize) return false;
-        for (let i = 0; i < size; i++) {
-            if (board[row + i][col] !== 0) return false;
-        }
-    }
-    return true;
-}
-
-function placeShip(board, row, col, size, horizontal) {
-    if (horizontal) {
-        for (let i = 0; i < size; i++) {
-            board[row][col + i] = 1;
-        }
-    } else {
-        for (let i = 0; i < size; i++) {
-            board[row + i][col] = 1;
-        }
-    }
-}
-
-function handlePlayerGuess(event) {
-    if (!gameStarted || !isPlayerTurn) return;
-    const row = parseInt(event.target.dataset.row);
-    const col = parseInt(event.target.dataset.col);
-    if (aiBoard[row][col] === -1 || aiBoard[row][col] === -2) return;
-
-    if (aiBoard[row][col] === 1) {
-        event.target.classList.add('hit');
-        aiBoard[row][col] = -2;
-        score += 10;
-        updateScore();
-        showWordGuess();
-    } else {
-        event.target.classList.add('miss');
-        aiBoard[row][col] = -1;
-        endPlayerTurn();
-    }
-}
-
-function showWordGuess() {
-    const language = document.getElementById('language-select').value;
-    const difficulty = document.getElementById('difficulty-select').value;
-    const words = languageWords[language][difficulty];
-    const wordObj = words[Math.floor(Math.random() * words.length)];
-    currentWord = wordObj.word;
-    document.getElementById('description').textContent = wordObj.description;
-    
-    const option1 = document.getElementById('option1');
-    const option2 = document.getElementById('option2');
-    
-    if (Math.random() < 0.5) {
-        option1.textContent = wordObj.options[0];
-        option2.textContent = wordObj.options[1];
-    } else {
-        option1.textContent = wordObj.options[1];
-        option2.textContent = wordObj.options[0];
+  }
+  
+  @media (max-width: 768px) {
+    nav li {
+      padding: 10px 5px;
+      font-size: 14px;
     }
     
-    option1.onclick = () => checkAnswer(option1.textContent);
-    option2.onclick = () => checkAnswer(option2.textContent);
+    table {
+      font-size: 14px;
+    }
     
-    document.getElementById('word-container').style.display = 'block';
-    isPlayerTurn = false;
-}
-
-function checkAnswer(answer) {
-    if (answer.toLowerCase() === currentWord.toLowerCase()) {
-        score += 20;
-        updateScore();
-        showMessage('¡Correcto! +20 puntos');
-    } else {
-        showMessage(`Incorrecto. La palabra correcta era: ${currentWord}`);
+    th, td {
+      padding: 8px;
     }
-    document.getElementById('word-container').style.display = 'none';
-    endPlayerTurn();
-}
-
-function endPlayerTurn() {
-    isPlayerTurn = false;
-    setTimeout(aiTurn, 1000);
-}
-
-function aiTurn() {
-    let row, col;
-    do {
-        row = Math.floor(Math.random() * boardSize);
-        col = Math.floor(Math.random() * boardSize);
-    } while (playerBoard[row][col] === -1 || playerBoard[row][col] === -2);
-
-    const cell = document.querySelector(`#player-board [data-row="${row}"][data-col="${col}"]`);
-    if (playerBoard[row][col] === 1) {
-        cell.classList.add('hit');
-        playerBoard[row][col] = -2;
-        showMessage('¡La IA ha acertado!');
-        setTimeout(aiTurn, 1000);
-    } else {
-        cell.classList.add('miss');
-        playerBoard[row][col] = -1;
-        showMessage('La IA ha fallado');
-        isPlayerTurn = true;
+    
+    .qr-code {
+      transform: scale(0.8);
     }
-}
+  }
+  
+  @media (max-width: 480px) {
+    nav li {
+      padding: 8px 3px;
+      font-size: 12px;
+    }
+    
+    h1 {
+      font-size: 24px;
+    }
+    
+    table {
+      font-size: 12px;
+    }
+    
+    th, td {
+      padding: 6px;
+    }
+    
+    .qr-code {
+      transform: scale(0.7);
+    }
+    
+    input, button {
+      font-size: 14px;
+    }
+  }
+</style>
+</head>
+<body>
+  <nav class="no-print">
+    <ul>
+      <li onclick="showSection('stock')" id="stockNav">Stock</li>
+      <li onclick="showSection('entrada')" id="entradaNav">Entrada</li>
+      <li onclick="showSection('salida')" id="salidaNav">Salida</li>
+    </ul>
+  </nav>
+  
+  <main>
+    <section id="stock" class="section">
+      <h1>Stock de Inventario</h1>
+      <div style="overflow-x: auto;">
+        <table id="inventoryTable">
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th class="no-print">QR</th>
+            <th class="no-print">Acciones</th>
+          </tr>
+        </table>
+      </div>
+    </section>
+    
+    <section id="entrada" class="section">
+      <h1>Entrada de Productos</h1>
+      <div class="input-group">
+        <input type="text" id="productName" placeholder="Nombre del producto">
+        <input type="number" id="productQuantity" placeholder="Cantidad">
+        <button onclick="addOrUpdateProduct()">Agregar o Actualizar</button>
+      </div>
+      <div id="qr-reader"></div>
+      <div class="input-group">
+        <input type="text" id="manualProductId" placeholder="Nombre del producto (escaneado)" readonly>
+        <input type="number" id="changeQuantity" placeholder="Cantidad a agregar">
+        <button onclick="changeStock(true)">Actualizar Stock</button>
+      </div>
+    </section>
+    
+    <section id="salida" class="section">
+      <h1>Salida de Productos</h1>
+      <div id="qr-reader-salida"></div>
+      <div class="input-group">
+        <input type="text" id="manualProductIdSalida" placeholder="Nombre del producto (escaneado)" readonly>
+        <input type="number" id="changeQuantitySalida" placeholder="Cantidad a retirar">
+        <button onclick="changeStock(false)">Actualizar Stock</button>
+      </div>
+    </section>
+  </main>
 
-function updateScore() {
-    document.getElementById('score').textContent = `Puntuación: ${score}`;
-}
+  <script>
+    let inventory = [];
 
-function showMessage(msg) {
-    document.getElementById('message').textContent = msg;
-}
+    function showSection(sectionId) {
+      document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+      document.getElementById(sectionId).classList.add('active');
+      document.querySelectorAll('nav li').forEach(li => li.classList.remove('active'));
+      document.getElementById(sectionId + 'Nav').classList.add('active');
+    }
 
-document.getElementById('start-game').addEventListener('click', () => {
-    gameStarted = true;
-    isPlayerTurn = true;
-    score = 0;
-    updateScore();
-    playerBoard = createBoard('player-board');
-    aiBoard = createBoard('ai-board');
-    playerShips = [];
-    aiShips = [];
-    placeShips(playerBoard, playerShips);
-    placeShips(aiBoard, aiShips);
-    showPlayerShips();
-    showMessage('¡El juego ha comenzado! Es tu turno.');
-});
-
-function showPlayerShips() {
-    for (let i = 0; i < boardSize; i++) {
-        for (let j = 0; j < boardSize; j++) {
-            if (playerBoard[i][j] === 1) {
-                const cell = document.querySelector(`#player-board [data-row="${i}"][data-col="${j}"]`);
-                cell.classList.add('ship');
-            }
+    function addOrUpdateProduct() {
+      const name = document.getElementById('productName').value;
+      const quantity = parseInt(document.getElementById('productQuantity').value);
+      if (name && quantity) {
+        const existingProduct = inventory.find(p => p.name === name);
+        if (existingProduct) {
+          existingProduct.quantity += quantity;
+        } else {
+          const product = { name, quantity };
+          inventory.push(product);
         }
+        updateTable();
+        document.getElementById('productName').value = '';
+        document.getElementById('productQuantity').value = '';
+      }
     }
-}
 
-playerBoard = createBoard('player-board');
-aiBoard = createBoard('ai-board');
-</script>
-</body></html>
+    function updateTable() {
+      const table = document.getElementById('inventoryTable');
+      while (table.rows.length > 1) {
+        table.deleteRow(1);
+      }
+      inventory.forEach(product => {
+        const row = table.insertRow();
+        row.insertCell(0).textContent = product.name;
+        row.insertCell(1).textContent = product.quantity;
+        const qrCell = row.insertCell(2);
+        qrCell.className = 'no-print';
+        const qrDiv = document.createElement('div');
+        qrDiv.className = 'qr-code';
+        new QRCode(qrDiv, product.name);
+        qrCell.appendChild(qrDiv);
+        const actionCell = row.insertCell(3);
+        actionCell.className = 'no-print';
+        const printButton = document.createElement('button');
+        printButton.textContent = 'Imprimir QR';
+        printButton.onclick = () => printQR(product.name);
+        actionCell.appendChild(printButton);
+      });
+    }
+
+    function changeStock(isEntry) {
+      const name = isEntry ? document.getElementById('manualProductId').value : document.getElementById('manualProductIdSalida').value;
+      const change = parseInt(isEntry ? document.getElementById('changeQuantity').value : -document.getElementById('changeQuantitySalida').value);
+      const product = inventory.find(p => p.name === name);
+      if (product) {
+        product.quantity += change;
+        if (product.quantity < 0) product.quantity = 0;
+        updateTable();
+        if (isEntry) {
+          document.getElementById('manualProductId').value = '';
+          document.getElementById('changeQuantity').value = '';
+        } else {
+          document.getElementById('manualProductIdSalida').value = '';
+          document.getElementById('changeQuantitySalida').value = '';
+        }
+      } else {
+        if (isEntry && change > 0) {
+          inventory.push({ name, quantity: change });
+          updateTable();
+          document.getElementById('manualProductId').value = '';
+          document.getElementById('changeQuantity').value = '';
+        } else {
+          alert('Producto no encontrado');
+        }
+      }
+    }
+
+    function printQR(name) {
+      const printWindow = window.open('', '', 'width=400,height=400');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Imprimir QR</title>
+            <style>
+              body { 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                height: 100vh; 
+                flex-direction: column; 
+              }
+            </style>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+          </head>
+          <body>
+            <h2>${name}</h2>
+            <div id="qrcode"></div>
+            <script>
+              new QRCode(document.getElementById("qrcode"), "${name}");
+              setTimeout(() => { window.print(); window.close(); }, 250);
+            <\/script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+    }
+
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+      "qr-reader", { fps: 10, qrbox: { width: 250, height: 250 } }
+    );
+    html5QrcodeScanner.render(onScanSuccess);
+
+    const html5QrcodeScannerSalida = new Html5QrcodeScanner(
+      "qr-reader-salida", { fps: 10, qrbox: { width: 250, height: 250 } }
+    );
+    html5QrcodeScannerSalida.render(onScanSuccessSalida);
+
+    function onScanSuccess(decodedText) {
+      document.getElementById('manualProductId').value = decodedText;
+    }
+
+    function onScanSuccessSalida(decodedText) {
+      document.getElementById('manualProductIdSalida').value = decodedText;
+    }
+
+    showSection('stock');
+    updateTable();
+  </script>
+</body>
+</html>
